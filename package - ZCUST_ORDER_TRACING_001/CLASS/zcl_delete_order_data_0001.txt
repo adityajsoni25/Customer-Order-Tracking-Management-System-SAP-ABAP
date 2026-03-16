@@ -1,0 +1,32 @@
+CLASS zcl_delete_order_data_0001 DEFINITION
+  PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+ENDCLASS.
+
+CLASS zcl_delete_order_data_0001 IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+
+    DATA: lv_order_id TYPE zorder_0001-order_id,
+          lv_deleted  TYPE i.
+
+    " Set order ID to delete
+    lv_order_id = 'ORD001'.
+
+    " Step 1: Delete related order items
+    DELETE FROM zorder_item_0001 WHERE order_id = @lv_order_id.
+    lv_deleted = sy-dbcnt.
+    out->write( |{ lv_deleted } item(s) deleted for order { lv_order_id }.| ).
+
+    " Step 2: Delete order header
+    DELETE FROM zorder_0001 WHERE order_id = @lv_order_id.
+    IF sy-subrc = 0.
+      out->write( |Order { lv_order_id } header deleted.| ).
+    ELSE.
+      out->write( |Order { lv_order_id } header not found.| ).
+    ENDIF.
+
+  ENDMETHOD.
+
+ENDCLASS.

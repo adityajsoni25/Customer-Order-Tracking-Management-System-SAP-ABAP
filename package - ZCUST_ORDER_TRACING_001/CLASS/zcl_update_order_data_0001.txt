@@ -1,0 +1,77 @@
+CLASS zcl_update_order_data_0001 DEFINITION
+  PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+ENDCLASS.
+
+CLASS zcl_update_order_data_0001 IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+
+    " Define structure for order input
+    TYPES: BEGIN OF ty_order_input,
+             order_id TYPE zorder_0001-order_id,
+             status   TYPE zorder_0001-status,
+           END OF ty_order_input.
+
+    DATA: lt_orders TYPE STANDARD TABLE OF ty_order_input WITH EMPTY KEY,
+          ls_input  TYPE ty_order_input,
+          ls_order  TYPE zorder_0001,
+          lt_items  TYPE STANDARD TABLE OF zorder_item_0001 WITH EMPTY KEY,
+          ls_item   TYPE zorder_item_0001,
+          lv_total  TYPE p DECIMALS 2,
+          lv_item_id TYPE zorder_item_0001-order_item_id.
+
+    " Add orders with different statuses
+    APPEND VALUE #( order_id = 'ORD001' status = 'Shipped' )     TO lt_orders.
+    APPEND VALUE #( order_id = 'ORD002' status = 'Delivered' )   TO lt_orders.
+    APPEND VALUE #( order_id = 'ORD003' status = 'Processing' )  TO lt_orders.
+    APPEND VALUE #( order_id = 'ORD004' status = 'Cancelled' )   TO lt_orders.
+    APPEND VALUE #( order_id = 'ORD005' status = 'Pending' )     TO lt_orders.
+    APPEND VALUE #( order_id = 'ORD006' status = 'Returned' )    TO lt_orders.
+
+    " Process each order
+    LOOP AT lt_orders INTO ls_input.
+
+      " Order header update
+      SELECT SINGLE * FROM zorder_0001 WHERE order_id = @ls_input-order_id INTO @ls_order.
+      IF sy-subrc = 0.
+        ls_order-status = ls_input-status.
+        UPDATE zorder_0001 FROM @ls_order.
+        out->write( |Order { ls_input-order_id } status updated to { ls_input-status }.| ).
+      ELSE.
+        out->write( |Order { ls_input-order_id } not found.| ).
+        CONTINUE.
+      ENDIF.
+
+      " Item ID generation and update
+      lv_item_id = |ITEM{ ls_input-order_id+3(3) }A|.
+
+      SELECT SINGLE * FROM zorder_item_0001 WHERE order_item_id = @lv_item_id INTO @ls_item.
+      IF sy-subrc = 0.
+        ls_item-quantity = 2.
+        ls_item-price    = 42000.
+        UPDATE zorder_item_0001 FROM @ls_item.
+        out->write( |Order item { lv_item_id } updated (Qty=2, Price=42000).| ).
+      ELSE.
+        out->write( |Order item { lv_item_id } not found.| ).
+      ENDIF.
+
+      " Recalculate total
+      CLEAR lv_total.
+      SELECT * FROM zorder_item_0001 WHERE order_id = @ls_input-order_id INTO TABLE @lt_items.
+
+      LOOP AT lt_items INTO ls_item.
+        lv_total = lv_total + ( ls_item-quantity * ls_item-price ).
+      ENDLOOP.
+
+      ls_order-total_amount = lv_total.
+      UPDATE zorder_0001 FROM @ls_order.
+
+      out->write( |Total amount for order { ls_input-order_id } updated to { lv_total }.| ).
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+ENDCLASS.

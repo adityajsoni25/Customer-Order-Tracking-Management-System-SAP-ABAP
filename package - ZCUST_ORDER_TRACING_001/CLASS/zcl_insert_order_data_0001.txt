@@ -1,0 +1,83 @@
+CLASS zcl_insert_order_data_0001 DEFINITION
+  PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+ENDCLASS.
+
+CLASS zcl_insert_order_data_0001 IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+
+    DATA: ls_customer     TYPE zcustomer_0001,
+          ls_product      TYPE zproduct_0001,
+          ls_order        TYPE zorder_0001,
+          ls_order_item   TYPE zorder_item_0001,
+          lv_date         TYPE dats,
+          lv_count        TYPE i VALUE 1.
+
+    lv_date = cl_abap_context_info=>get_system_date( ).
+
+    DATA lt_customers TYPE STANDARD TABLE OF zcustomer_0001 WITH EMPTY KEY.
+
+    APPEND VALUE #( customer_id = 'CUST001' name = 'Aditya Soni'      email = 'aditya@example.com'     phone = '9999999999' ) TO lt_customers.
+    APPEND VALUE #( customer_id = 'CUST002' name = 'Mihir Patel'      email = 'mihir@example.com'      phone = '8888888888' ) TO lt_customers.
+    APPEND VALUE #( customer_id = 'CUST003' name = 'Tirth Patel'      email = 'tirth@example.com'      phone = '7777777777' ) TO lt_customers.
+    APPEND VALUE #( customer_id = 'CUST004' name = 'Yash Vishwakarma' email = 'yash@example.com'       phone = '6666666666' ) TO lt_customers.
+    APPEND VALUE #( customer_id = 'CUST005' name = 'Faizal Saiyad'    email = 'faizal@example.com'     phone = '5555555555' ) TO lt_customers.
+    APPEND VALUE #( customer_id = 'CUST006' name = 'Raza Ghanchi'     email = 'raza@example.com'       phone = '4444444444' ) TO lt_customers.
+
+    LOOP AT lt_customers INTO ls_customer.
+      INSERT zcustomer_0001 FROM @ls_customer.
+      out->write( |Customer { ls_customer-customer_id } inserted.| ).
+    ENDLOOP.
+
+    DATA lt_products TYPE STANDARD TABLE OF zproduct_0001 WITH EMPTY KEY.
+
+    APPEND VALUE #( product_id = 'PROD001' product_name = 'Laptop' price = 45000 stock = 10 ) TO lt_products.
+    APPEND VALUE #( product_id = 'PROD002' product_name = 'Mouse'  price = 500    stock = 100 ) TO lt_products.
+    APPEND VALUE #( product_id = 'PROD003' product_name = 'TV'     price = 30000  stock = 15 ) TO lt_products.
+    APPEND VALUE #( product_id = 'PROD004' product_name = 'Mobile' price = 20000  stock = 25 ) TO lt_products.
+
+    LOOP AT lt_products INTO ls_product.
+      INSERT zproduct_0001 FROM @ls_product.
+      out->write( |Product { ls_product-product_id } inserted.| ).
+    ENDLOOP.
+
+    LOOP AT lt_customers INTO ls_customer.
+
+      DATA(lv_order_id) = |ORD00{ lv_count }|.
+      DATA(lv_item_id1) = |ITEM{ lv_count }A|.
+      DATA(lv_item_id2) = |ITEM{ lv_count }B|.
+
+      ls_order-order_id     = lv_order_id.
+      ls_order-customer_id  = ls_customer-customer_id.
+      ls_order-order_date   = lv_date.
+      ls_order-status       = 'Pending'.
+
+      ls_order_item-order_item_id = lv_item_id1.
+      ls_order_item-order_id      = lv_order_id.
+      ls_order_item-product_id    = 'PROD001'.
+      ls_order_item-quantity      = 1.
+      ls_order_item-price         = 45000.
+      INSERT zorder_item_0001 FROM @ls_order_item.
+
+      ls_order_item-order_item_id = lv_item_id2.
+      ls_order_item-product_id    = 'PROD004'.
+      ls_order_item-quantity      = 1.
+      ls_order_item-price         = 20000.
+      INSERT zorder_item_0001 FROM @ls_order_item.
+
+      ls_order-total_amount = 45000 + 20000.
+      INSERT zorder_0001 FROM @ls_order.
+
+      out->write( |Order { lv_order_id } inserted for customer { ls_customer-name }.| ).
+
+      lv_count += 1.
+
+    ENDLOOP.
+
+    out->write( 'All customer orders inserted successfully.' ).
+
+  ENDMETHOD.
+
+ENDCLASS.

@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service Def for CDS Order Report'
+define service ZUI_ORDER_REPORT {
+  expose ZC_ORDER_REPORT as OrderReport;
+}

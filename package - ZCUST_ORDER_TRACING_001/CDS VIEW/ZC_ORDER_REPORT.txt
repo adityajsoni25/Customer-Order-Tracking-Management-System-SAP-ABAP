@@ -1,0 +1,30 @@
+@AbapCatalog.sqlViewName: 'ZVORDREPRT'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Customer Order Report CDS View'
+@Metadata.ignorePropagatedAnnotations: true
+define view ZC_ORDER_REPORT 
+  as select from zorder_0001 as o
+    inner join zcustomer_0001 as c on c.customer_id = o.customer_id
+    inner join zorder_item_0001 as i on i.order_id = o.order_id
+    inner join zproduct_0001 as p on p.product_id = i.product_id
+{
+  //  All KEY fields come first and are contiguous
+  key o.order_id,
+  key i.order_item_id,
+
+  o.order_date,
+  o.status,
+  i.quantity,
+  i.price,
+  i.quantity * i.price as line_total,
+
+  c.customer_id,
+  c.name          as customer_name,
+  c.email         as customer_email,
+  c.phone         as customer_phone,
+
+  p.product_id,
+  p.product_name,
+  p.stock         as available_stock
+}

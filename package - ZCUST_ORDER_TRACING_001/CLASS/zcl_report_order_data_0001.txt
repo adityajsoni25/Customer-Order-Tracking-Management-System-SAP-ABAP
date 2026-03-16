@@ -1,0 +1,80 @@
+CLASS zcl_report_order_data_0001 DEFINITION
+  PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+ENDCLASS.
+
+CLASS zcl_report_order_data_0001 IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+
+    TYPES: BEGIN OF ty_report_line,
+             order_id     TYPE zorder_0001-order_id,
+             customer     TYPE zcustomer_0001-name,
+             order_date   TYPE zorder_0001-order_date,
+             status       TYPE zorder_0001-status,
+             product_name TYPE zproduct_0001-product_name,
+             quantity     TYPE zorder_item_0001-quantity,
+             price        TYPE zorder_item_0001-price,
+           END OF ty_report_line.
+
+    DATA: lt_report         TYPE STANDARD TABLE OF ty_report_line WITH EMPTY KEY,
+          ls_line           TYPE ty_report_line,
+          lv_line_total     TYPE p DECIMALS 2,
+          lv_total          TYPE p DECIMALS 2,
+          lv_current_order  TYPE zorder_0001-order_id,
+          lv_line           TYPE string.
+
+    " ✅ SELECT using JOIN and INTO at end
+    SELECT
+      o~order_id,
+      c~name          AS customer,
+      o~order_date,
+      o~status,
+      p~product_name,
+      i~quantity,
+      i~price
+      FROM zorder_0001 AS o
+      INNER JOIN zcustomer_0001 AS c ON c~customer_id = o~customer_id
+      INNER JOIN zorder_item_0001 AS i ON i~order_id = o~order_id
+      INNER JOIN zproduct_0001     AS p ON p~product_id = i~product_id
+      ORDER BY o~order_id
+      INTO TABLE @lt_report.
+
+    CLEAR: lv_current_order, lv_total.
+
+    " 🧾 Table header
+    out->write( |ORDER ID  CUSTOMER        DATE       STATUS      PRODUCT        QTY   PRICE      LINE TOTAL| ).
+    out->write( |--------- --------------- ---------- ----------- -------------- ----- ---------- -----------| ).
+
+    LOOP AT lt_report INTO ls_line.
+
+      IF lv_current_order IS INITIAL OR lv_current_order <> ls_line-order_id.
+        IF lv_current_order IS NOT INITIAL.
+          out->write( |--------- --------------- ---------- ----------- -------------- ----- ---------- -----------| ).
+          out->write( |Total for Order { lv_current_order }: { lv_total }| ).
+          out->write( |=============================================================================================| ).
+          CLEAR lv_total.
+        ENDIF.
+        lv_current_order = ls_line-order_id.
+      ENDIF.
+
+      lv_line_total = ls_line-quantity * ls_line-price.
+      lv_total = lv_total + lv_line_total.
+
+      lv_line = |{ ls_line-order_id     WIDTH = 9 }  { ls_line-customer WIDTH = 15 } { ls_line-order_date WIDTH = 10 } { ls_line-status WIDTH = 11 } { ls_line-product_name WIDTH = 14 } { ls_line-quantity WIDTH = 5 } { ls_line-price WIDTH = 10 } {
+lv_line_total WIDTH = 11 }|.
+      out->write( lv_line ).
+
+    ENDLOOP.
+
+    " Final order total (if loop ran)
+    IF lv_current_order IS NOT INITIAL.
+      out->write( |--------- --------------- ---------- ----------- -------------- ----- ---------- -----------| ).
+      out->write( |Total for Order { lv_current_order }: { lv_total }| ).
+      out->write( |=============================================================================================| ).
+    ENDIF.
+
+  ENDMETHOD.
+
+ENDCLASS.

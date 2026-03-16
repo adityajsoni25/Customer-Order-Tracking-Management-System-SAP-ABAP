@@ -1,0 +1,15 @@
+@EndUserText.label : 'Customer Order Header'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zorder_0001 {
+
+  key client   : abap.clnt not null;
+  key order_id : abap.char(10) not null;
+  customer_id  : abap.char(10);
+  order_date   : abap.dats;
+  total_amount : abap.dec(15,2);
+  status       : abap.char(15);
+
+}

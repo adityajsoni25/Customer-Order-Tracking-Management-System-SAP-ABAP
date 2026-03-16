@@ -1,0 +1,14 @@
+@EndUserText.label : 'Product Master Data'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zproduct_0001 {
+
+  key client     : abap.clnt not null;
+  key product_id : abap.char(10) not null;
+  product_name   : abap.char(50);
+  price          : abap.dec(15,2);
+  stock          : abap.int4;
+
+}
